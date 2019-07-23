@@ -19,7 +19,7 @@ class Database:
     def set(self, data: list):
         if len(data) < 2:
             return
-        elif len(data)%2 != 0:
+        elif len(data) % 2 != 0:
             print('Error! For one of enter variables does not exist value')
             return
 
@@ -61,14 +61,18 @@ class Database:
             self.transaction_deep = True
 
     def commit_transition(self, *args):
-        if len(self.cash_of_storages) > 1:
+        if not self.cash_of_storages:
+            print('Error! This command worked only in transaction context')
+        elif len(self.cash_of_storages) > 1:
             self.cash_of_storages[-1] = self.cash_of_storages.pop(-1)
         else:
             self.main_storage = self.cash_of_storages.pop(-1)
             self.transaction_deep = False
 
     def roll_back(self, *args):
-        if len(self.cash_of_storages) > 1:
+        if not self.cash_of_storages:
+            print('Error! This command worked only in transaction context')
+        elif len(self.cash_of_storages) > 1:
             self.cash_of_storages.pop(-1)
         else:
             self.cash_of_storages.pop(-1)
