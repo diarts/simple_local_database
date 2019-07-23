@@ -1,10 +1,10 @@
 class Database:
     """simple local RAM database"""
-    MAIN_STORAGE = {}
-    CASH_STORAGE = {}
 
     def __init__(self):
-        self.is_transaction = False
+        self.main_storage = {}
+        self.cash_of_storages = []
+        self.transaction_deep = False
         self.command_dict = {'set': self.set,
                              'get': self.get,
                              'unset': self.unset,
@@ -19,49 +19,63 @@ class Database:
     def set(self, data: list):
         if len(data) < 2:
             return
+        elif len(data)%2 != 0:
+            print('Error! For one of enter variables does not exist value')
+            return
 
         for i in range(0, len(data), 2):
             name = data[i]
             value = data[i + 1]
 
-            if self.is_transaction:
-                self.CASH_STORAGE[name] = value
+            if self.transaction_deep:
+                self.cash_of_storages[-1][name] = value
             else:
-                self.MAIN_STORAGE[name] = value
-                self.roll_back()
+                self.main_storage[name] = value
 
     def get(self, data: list):
         for variable in data:
-            if self.is_transaction:
-                print(self.CASH_STORAGE.get(variable) or 'NULL')
+            if self.transaction_deep:
+                print(self.cash_of_storages[-1].get(variable) or 'NULL')
             else:
-                print(self.MAIN_STORAGE.get(variable) or 'NULL')
+                print(self.main_storage.get(variable) or 'NULL')
 
     def unset(self, data: list):
-        if self.is_transaction:
-            self.CASH_STORAGE.pop(data[0], None) or print(f"Variable {data[0]} doesn't exist in database")
+        if self.transaction_deep:
+            self.cash_of_storages[-1].pop(data[0], None) or print(f"Variable {data[0]} doesn't exist in database")
         else:
-            self.MAIN_STORAGE.pop(data[0], None) or print(f"Variable {data[0]} doesn't exist in database")
-            self.roll_back()
+            self.main_storage.pop(data[0], None) or print(f"Variable {data[0]} doesn't exist in database")
 
     def counts(self, data: list):
         if data:
-            if self.is_transaction:
-                counts = sum(value == data[0] for _, value in self.CASH_STORAGE.items())
+            if self.transaction_deep:
+                counts = sum(value == data[0] for _, value in self.cash_of_storages[-1].items())
             else:
-                counts = sum(value == data[0] for _, value in self.MAIN_STORAGE.items())
+                counts = sum(value == data[0] for _, value in self.main_storage.items())
             print(counts)
 
     def start_transaction(self, *args):
-        self.is_transaction = True
+        if self.transaction_deep:
+            self.cash_of_storages.append(self.cash_of_storages[-1].copy())
+            print(self.cash_of_storages[-1])
+            print(self.cash_of_storages[-2])
+        else:
+            self.cash_of_storages.append(self.main_storage.copy())
+            print(self.cash_of_storages)
+            self.transaction_deep = True
 
     def commit_transition(self, *args):
-        self.MAIN_STORAGE = self.CASH_STORAGE.copy()
-        self.is_transaction = False
+        if len(self.cash_of_storages) > 1:
+            self.cash_of_storages[-1] = self.cash_of_storages.pop(-1)
+        else:
+            self.main_storage = self.cash_of_storages.pop(-1)
+            self.transaction_deep = False
 
     def roll_back(self, *args):
-        self.CASH_STORAGE = self.MAIN_STORAGE.copy()
-        self.is_transaction = False
+        if len(self.cash_of_storages) > 1:
+            self.cash_of_storages.pop(-1)
+        else:
+            self.cash_of_storages.pop(-1)
+            self.transaction_deep = False
 
     def help(self, *args):
         print(
