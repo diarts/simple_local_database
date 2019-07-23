@@ -56,11 +56,8 @@ class Database:
     def start_transaction(self, *args):
         if self.transaction_deep:
             self.cash_of_storages.append(self.cash_of_storages[-1].copy())
-            print(self.cash_of_storages[-1])
-            print(self.cash_of_storages[-2])
         else:
             self.cash_of_storages.append(self.main_storage.copy())
-            print(self.cash_of_storages)
             self.transaction_deep = True
 
     def commit_transition(self, *args):
